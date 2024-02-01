@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/gin-gonic/gin"
-	"github.com/kundanacc20/Offer_Rolledout/db"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Candidate struct {
@@ -19,13 +20,14 @@ type Candidate struct {
 	InterviewStatus string `json:"interview_status"`
 }
 
-// type DBHandler interface {
-// 	Query(query string, args ...interface{}) (*sql.Rows, error)
-// }
+type DBHandler interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+}
 
-func GetCandidatesWithAcceptedOffers(c *gin.Context) {
+func GetCandidatesWithAcceptedOffers(db DBHandler, c *gin.Context) {
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
-	rows, err := db.Db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
+	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
 		"FROM resume r " +
 		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id " +
 		"WHERE ist.interview_status = 'offer_rolledout_accepted'")
@@ -55,6 +57,68 @@ func GetCandidatesWithAcceptedOffers(c *gin.Context) {
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
+}
+
+func GetCandidatesWithAwaitedOffers(db DBHandler, c *gin.Context) {
+	// Query the database for candidates with interview status "offer_rolledout_awaited"
+	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
+		"FROM resume r " +
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id " +
+		"WHERE ist.interview_status = 'offer_rolledout_awaited'")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+	defer rows.Close()
+
+	// Iterate through the result set and build a list of candidates
+	var candidates []Candidate
+	for rows.Next() {
+		var candidate Candidate
+		if err := rows.Scan(&candidate.CandidateID, &candidate.Name, &candidate.EmailID, &candidate.CurrentCompany, &candidate.Mobile, &candidate.InterviewStatus); err != nil {
+			log.Println("Error scanning row:", err)
+			continue
+		}
+		candidates = append(candidates, candidate)
+	}
+
+	// Return the list of candidates with interview status "offer_rolledout_awaited"
+	c.JSON(http.StatusOK, candidates)
+
+	// write data to file
+	err = writeToExcel("awaited_candidates.xlsx", candidates)
+	if err != nil {
+		log.Println("Error writing data to Excel:", err)
+	}
+}
+
+func GetAcceptedCandidatesCount(db DBHandler, c *gin.Context) {
+	// Query the database for the count of candidates with interview status "offer_rolledout_accepted"
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM interview_status_table WHERE interview_status = 'offer_rolledout_accepted'").Scan(&count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+
+	// Return the total count of candidates with interview status "offer_rolledout_accepted"
+	c.JSON(http.StatusOK, gin.H{"accepted_candidates_count": count})
+}
+
+func GetAwaitedCandidatesCount(db DBHandler, c *gin.Context) {
+	// Query the database for the count of candidates with interview status "offer_rolledout_awaited"
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM interview_status_table WHERE interview_status = 'offer_rolledout_awaited'").Scan(&count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+
+	// Return the total count of candidates with interview status "offer_rolledout_awaited"
+	c.JSON(http.StatusOK, gin.H{"awaited_candidates_count": count})
 }
 
 // function that will get database form database and write data in excel
