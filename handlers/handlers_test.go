@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetCandidatesWithAcceptedOffers(t *testing.T) {
@@ -139,9 +142,57 @@ func TestWriteToExcel(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err, "writeToExcel should not return an error")
 
-	// Additional assertions can be added based on your specific requirements
-	// For example, you can check if the file exists, if the headers and data are correctly written, etc.
-	// Here, we check if the file exists after writing
 	_, err = os.Stat(filename)
 	assert.False(t, os.IsNotExist(err), "Test output file should exist")
+}
+
+// MockDB is a mock implementation of the DBHandler interface
+type MockDB struct {
+	mock.Mock
+}
+
+// Query is a mock implementation for the Query method in DBHandler
+func (m *MockDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	arguments := m.Called(query, args)
+	return nil, arguments.Error(1)
+}
+
+// QueryRow is a mock implementation for the QueryRow method in DBHandler
+func (m *MockDB) QueryRow(query string, args ...interface{}) *sql.Row {
+	arguments := m.Called(query, args)
+	return arguments.Get(0).(*sql.Row)
+}
+
+func TestGetCandidatesWithAcceptedOffersNegative(t *testing.T) {
+	mockDB := new(MockDB)
+	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+	r := gin.Default()
+	r.GET("/candidates_offers_rolledout_accepted", func(ctx *gin.Context) { GetCandidatesWithAcceptedOffers(mockDB, ctx) })
+
+	req, err := http.NewRequest("GET", "/candidates_offers_rolledout_accepted", nil)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockDB.AssertExpectations(t)
+}
+
+func TestGetCandidatesWithAwaitedOffersNegative(t *testing.T) {
+	mockDB := new(MockDB)
+	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+	r := gin.Default()
+	r.GET("/candidates_offers_rolledout_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(mockDB, ctx) })
+
+	req, err := http.NewRequest("GET", "/candidates_offers_rolledout_awaited", nil)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockDB.AssertExpectations(t)
 }
