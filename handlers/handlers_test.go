@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -116,4 +117,31 @@ func TestGetAwaitedCandidatesCount(t *testing.T) {
 		t.Errorf("there were unfulfilled edpectation: %s", err)
 	}
 
+}
+
+func TestWriteToExcel(t *testing.T) {
+	// Test data
+	filename := "test_output.xlsx"
+	candidates := []Candidate{
+		{1, "John Doe", "john@example.com", "ABC Company", "1234567890", "offer_rolledout_accepted"},
+		{2, "Jane Doe", "jane@example.com", "XYZ Company", "9876543210", "offer_rolledout_accepted"},
+	}
+
+	// Execute the writeToExcel function
+	err := writeToExcel(filename, candidates)
+	defer func() {
+		// Clean up: Remove the test output file after the test
+		if err := os.Remove(filename); err != nil {
+			t.Errorf("Error removing test output file: %v", err)
+		}
+	}()
+
+	// Assertions
+	assert.NoError(t, err, "writeToExcel should not return an error")
+
+	// Additional assertions can be added based on your specific requirements
+	// For example, you can check if the file exists, if the headers and data are correctly written, etc.
+	// Here, we check if the file exists after writing
+	_, err = os.Stat(filename)
+	assert.False(t, os.IsNotExist(err), "Test output file should exist")
 }
