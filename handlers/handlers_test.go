@@ -29,9 +29,9 @@ func TestGetCandidatesWithAcceptedOffers(t *testing.T) {
 	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
 
 	r := gin.Default()
-	r.GET("/candidates_offers_rolledout_accepted", func(ctx *gin.Context) { GetCandidatesWithAcceptedOffers(db, ctx) })
+	r.GET("/interview-db/home/offer_rolled_out_accepted", func(ctx *gin.Context) { GetCandidatesWithAcceptedOffers(db, ctx) })
 
-	req, _ := http.NewRequest("GET", "/candidates_offers_rolledout_accepted", nil)
+	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_accepted", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -55,9 +55,9 @@ func TestGetCandidatesWithAwaitedOffers(t *testing.T) {
 	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
 
 	r := gin.Default()
-	r.GET("/candidates_offers_rolledout_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(db, ctx) })
+	r.GET("/interview-db/home/offer_rolled_out_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(db, ctx) })
 
-	req, _ := http.NewRequest("GET", "/candidates_offers_rolledout_awaited", nil)
+	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_awaited", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -81,9 +81,9 @@ func TestGetAcceptedCandidatesCount(t *testing.T) {
 	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
 
 	r := gin.Default()
-	r.GET("/count_candidates_offers_rolledout_accepted", func(ctx *gin.Context) { GetAcceptedCandidatesCount(db, ctx) })
+	r.GET("/interview-db/home/offer_rolled_out_accepted_count", func(ctx *gin.Context) { GetAcceptedCandidatesCount(db, ctx) })
 
-	req, _ := http.NewRequest("GET", "/count_candidates_offers_rolledout_accepted", nil)
+	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_accepted_count", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -108,9 +108,9 @@ func TestGetAwaitedCandidatesCount(t *testing.T) {
 	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
 
 	r := gin.Default()
-	r.GET("/count_candidates_offers_rolledout_awaited", func(ctx *gin.Context) { GetAwaitedCandidatesCount(db, ctx) })
+	r.GET("/interview-db/home/offer_rolled_out_awaited_count", func(ctx *gin.Context) { GetAwaitedCandidatesCount(db, ctx) })
 
-	req, _ := http.NewRequest("GET", "/count_candidates_offers_rolledout_awaited", nil)
+	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_awaited_count", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -168,9 +168,9 @@ func TestGetCandidatesWithAcceptedOffersNegative(t *testing.T) {
 	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 
 	r := gin.Default()
-	r.GET("/candidates_offers_rolledout_accepted", func(ctx *gin.Context) { GetCandidatesWithAcceptedOffers(mockDB, ctx) })
+	r.GET("/interview-db/home/offer_rolled_out_accepted", func(ctx *gin.Context) { GetCandidatesWithAcceptedOffers(mockDB, ctx) })
 
-	req, err := http.NewRequest("GET", "/candidates_offers_rolledout_accepted", nil)
+	req, err := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_accepted", nil)
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -185,9 +185,9 @@ func TestGetCandidatesWithAwaitedOffersNegative(t *testing.T) {
 	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 
 	r := gin.Default()
-	r.GET("/candidates_offers_rolledout_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(mockDB, ctx) })
+	r.GET("/interview-db/home/offer_rolled_out_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(mockDB, ctx) })
 
-	req, err := http.NewRequest("GET", "/candidates_offers_rolledout_awaited", nil)
+	req, err := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_awaited", nil)
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()

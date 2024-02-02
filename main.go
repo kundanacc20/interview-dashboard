@@ -17,10 +17,10 @@ func main() {
 	r := gin.Default()
 
 	// rest api end point
-	r.GET("/candidates_offers_rolledout_accepted", func(c *gin.Context) { handlers.GetCandidatesWithAcceptedOffers(database, c) })
-	r.GET("/candidates_offers_rolledout_awaited", func(c *gin.Context) { handlers.GetCandidatesWithAwaitedOffers(database, c) })
-	r.GET("/count_candidates_offers_rolledout_accepted", func(c *gin.Context) { handlers.GetAcceptedCandidatesCount(database, c) })
-	r.GET("/count_candidates_offers_rolledout_awaited", func(c *gin.Context) { handlers.GetAwaitedCandidatesCount(database, c) })
+	r.GET("/interview-db/home/offer_rolled_out_accepted", func(c *gin.Context) { handlers.GetCandidatesWithAcceptedOffers(database, c) })
+	r.GET("/interview-db/home/offer_rolled_out_awaited", func(c *gin.Context) { handlers.GetCandidatesWithAwaitedOffers(database, c) })
+	r.GET("/interview-db/home/offer_rolled_out_accepted_count", func(c *gin.Context) { handlers.GetAcceptedCandidatesCount(database, c) })
+	r.GET("/interview-db/home/offer_rolled_out_awaited_count", func(c *gin.Context) { handlers.GetAwaitedCandidatesCount(database, c) })
 
 	// Run the server on port 9090
 	if err := r.Run(":9090"); err != nil {
