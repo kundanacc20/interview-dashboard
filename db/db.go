@@ -1,17 +1,29 @@
+// db/db.go
+
 package db
 
 import (
 	"database/sql"
 	"log"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
-// var Db *sql.DB
-// var err error
+// Database represents the database connection
+type Database struct {
+	Conn *sql.DB
+}
 
-// databse connection
-func InitDB(dsn string) *sql.DB {
+// Exec implements handlers.DBHandler.
+func (d *Database) Exec(query string, args ...interface{}) (sql.Result, error) {
+	result, err := d.Conn.Exec(query, args...)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// InitDB initializes a new Database instance
+func InitDB(dsn string) *Database {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
@@ -21,5 +33,21 @@ func InitDB(dsn string) *sql.DB {
 		log.Fatal(err)
 	}
 
-	return db
+	return &Database{Conn: db}
+}
+
+// Query executes a SQL query and returns the result
+func (d *Database) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	rows, err := d.Conn.Query(query, args...)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return rows, nil
+}
+
+// QueryRow executes a SQL query that is expected to return at most one row
+func (d *Database) QueryRow(query string, args ...interface{}) *sql.Row {
+	row := d.Conn.QueryRow(query, args...)
+	return row
 }

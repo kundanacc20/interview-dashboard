@@ -11,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/kundanacc20/Offer_Rolledout/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,32 +33,6 @@ func TestGetCandidatesWithAcceptedOffers(t *testing.T) {
 	r.GET("/interview-db/home/offer_rolled_out_accepted", func(ctx *gin.Context) { GetCandidatesWithAcceptedOffers(db, ctx) })
 
 	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_accepted", nil)
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled edpectation: %s", err)
-	}
-
-}
-func TestGetCandidatesWithAwaitedOffers(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
-		AddRow(1, "John Doe", "john@example.com", "ABC Company", "1234567890", "offer_rolledout_awaited").
-		AddRow(2, "Jane Doe", "jane@example.com", "XYZ Company", "9876543210", "offer_rolledout_awaited")
-
-	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
-
-	r := gin.Default()
-	r.GET("/interview-db/home/offer_rolled_out_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(db, ctx) })
-
-	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_awaited", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -94,6 +69,32 @@ func TestGetAcceptedCandidatesCount(t *testing.T) {
 	}
 
 }
+func TestGetCandidatesWithAwaitedOffers(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(1, "John Doe", "john@example.com", "ABC Company", "1234567890", "offer_rolledout_awaited").
+		AddRow(2, "Jane Doe", "jane@example.com", "XYZ Company", "9876543210", "offer_rolledout_awaited")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/offer_rolled_out_awaited", func(ctx *gin.Context) { GetCandidatesWithAwaitedOffers(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/offer_rolled_out_awaited", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
 
 func TestGetAwaitedCandidatesCount(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -122,33 +123,14 @@ func TestGetAwaitedCandidatesCount(t *testing.T) {
 
 }
 
-func TestWriteToExcel(t *testing.T) {
-	// Test data
-	filename := "test_output.xlsx"
-	candidates := []Candidate{
-		{1, "John Doe", "john@example.com", "ABC Company", "1234567890", "offer_rolledout_accepted"},
-		{2, "Jane Doe", "jane@example.com", "XYZ Company", "9876543210", "offer_rolledout_accepted"},
-	}
-
-	// Execute the writeToExcel function
-	err := writeToExcel(filename, candidates)
-	defer func() {
-		// Clean up: Remove the test output file after the test
-		if err := os.Remove(filename); err != nil {
-			t.Errorf("Error removing test output file: %v", err)
-		}
-	}()
-
-	// Assertions
-	assert.NoError(t, err, "writeToExcel should not return an error")
-
-	_, err = os.Stat(filename)
-	assert.False(t, os.IsNotExist(err), "Test output file should exist")
-}
-
 // MockDB is a mock implementation of the DBHandler interface
 type MockDB struct {
 	mock.Mock
+}
+
+// Exec implements DBHandler.
+func (*MockDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	panic("unimplemented")
 }
 
 // Query is a mock implementation for the Query method in DBHandler
@@ -195,4 +177,28 @@ func TestGetCandidatesWithAwaitedOffersNegative(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	mockDB.AssertExpectations(t)
+}
+
+func TestWriteToExcel(t *testing.T) {
+	// Test data
+	filename := "test_output.xlsx"
+	candidates := []models.Candidate{
+		{1, "John Doe", "john@example.com", "ABC Company", "1234567890", "offer_rolledout_accepted"},
+		{2, "Jane Doe", "jane@example.com", "XYZ Company", "9876543210", "offer_rolledout_accepted"},
+	}
+
+	// Execute the writeToExcel function
+	err := writeToExcel(filename, candidates)
+	defer func() {
+		// Clean up: Remove the test output file after the test
+		if err := os.Remove(filename); err != nil {
+			t.Errorf("Error removing test output file: %v", err)
+		}
+	}()
+
+	// Assertions
+	assert.NoError(t, err, "writeToExcel should not return an error")
+
+	_, err = os.Stat(filename)
+	assert.False(t, os.IsNotExist(err), "Test output file should exist")
 }
