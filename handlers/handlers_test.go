@@ -202,3 +202,138 @@ func TestWriteToExcel(t *testing.T) {
 	_, err = os.Stat(filename)
 	assert.False(t, os.IsNotExist(err), "Test output file should exist")
 }
+
+// arpit unit test cases
+func TestGetListOfAllCandidatAtL1(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was occurred while opening a database connection for test.", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(3, "Rajnish Pandey", "rajnish.pandey@gmail.com", "TCS", "7042787850", "L1_selected").
+		AddRow(4, "Harshendra Mandloi", "harsh.mandloi@gmail.com", "Infosys", "7042787851", "L1_rejected")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+	r := gin.Default()
+	r.GET("/interview-db/home/L1", func(ctx *gin.Context) { GetListOfAllCandidatAtL1(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/L1", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetSelectedL1Count(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' occurred while opening a connection to database for test.", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).AddRow(2)
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/L1_count_selected", func(ctx *gin.Context) { GetSelectedL1Count(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/L1_count_selected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "{\"level_L1_selected_count\":2}", w.Body.String())
+}
+
+func TestGetRejectedL1Count(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' occurred while opening a connection to database for test.", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).AddRow(2)
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/L1_count_rejected", func(ctx *gin.Context) { GetRejectedL1Count(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/L1_count_rejected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "{\"level_L1_rejected_count\":2}", w.Body.String())
+}
+
+func TestGetListOfAllCandidatAtL2(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was occurred while opening a database connection for test.", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(3, "Rajnish Pandey", "rajnish.pandey@gmail.com", "TCS", "7042787850", "L2_selected").
+		AddRow(4, "Harshendra Mandloi", "harsh.mandloi@gmail.com", "Infosys", "7042787851", "L2_rejected")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+	r := gin.Default()
+	r.GET("/interview-db/home/L2", func(ctx *gin.Context) { GetListOfAllCandidatAtL2(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/L2", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("There were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetSelectedL2Count(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' occurred while opening a connection to database for test.", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).AddRow(2)
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/L2_count_selected", func(ctx *gin.Context) { GetSelectedL2Count(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/L2_count_selected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "{\"level_L2_selected_count\":2}", w.Body.String())
+}
+
+func TestGetRejectedL2Count(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' occurred while opening a connection to database for test.", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).AddRow(2)
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/L2_count_rejected", func(ctx *gin.Context) { GetRejectedL2Count(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/L2_count_rejected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "{\"level_L2_rejected_count\":2}", w.Body.String())
+}

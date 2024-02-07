@@ -24,13 +24,19 @@ func SetupRouter(database *db.Database) *gin.Engine {
 	r.GET("/interview-db/home/onboarded_count", func(c *gin.Context) { handlers.GetOnboardedCount(database, c) })
 
 	r.GET("/interview-db/home/DM", func(c *gin.Context) { handlers.GetListOfAllCandidatAtDM(database, c) })
-	r.GET("/interview-db/home/DM_selected", func(c *gin.Context) { handlers.GetSelectedDMCount(database, c) })
-	r.GET("/interview-db/home/DM_rejected", func(c *gin.Context) { handlers.GetRejectedDMCount(database, c) })
+	r.GET("/interview-db/home/DM_selected", func(c *gin.Context) { handlers.GetListOfAllCandidatAtDMSelected(database, c) })
+	r.GET("/interview-db/home/DM_rejected", func(c *gin.Context) { handlers.GetListOfAllCandidatAtDMRejected(database, c) })
+	r.GET("/interview-db/home/DM_selected_count", func(c *gin.Context) { handlers.GetSelectedDMCount(database, c) })
+	r.GET("/interview-db/home/DM_rejected_count", func(c *gin.Context) { handlers.GetRejectedDMCount(database, c) })
 
 	r.GET("/interview-db/home/L1", func(c *gin.Context) { handlers.GetListOfAllCandidatAtL1(database, c) })
+	r.GET("/interview-db/home/L1_selected", func(c *gin.Context) { handlers.GetListOfAllCandidatAtL1Selected(database, c) })
+	r.GET("/interview-db/home/L1_rejected", func(c *gin.Context) { handlers.GetListOfAllCandidatAtL1Rejected(database, c) })
 	r.GET("/interview-db/home/L1_count_selected", func(c *gin.Context) { handlers.GetSelectedL1Count(database, c) })
 	r.GET("/interview-db/home/L1_count_rejected", func(c *gin.Context) { handlers.GetRejectedL1Count(database, c) })
 	r.GET("/interview-db/home/L2", func(c *gin.Context) { handlers.GetListOfAllCandidatAtL2(database, c) })
+	r.GET("/interview-db/home/L2_selected", func(c *gin.Context) { handlers.GetListOfAllCandidatAtL2Selected(database, c) })
+	r.GET("/interview-db/home/L2_rejected", func(c *gin.Context) { handlers.GetListOfAllCandidatAtL2Rejected(database, c) })
 	r.GET("/interview-db/home/L2_count_selected", func(c *gin.Context) { handlers.GetSelectedL2Count(database, c) })
 	r.GET("/interview-db/home/L2_count_rejected", func(c *gin.Context) { handlers.GetRejectedL2Count(database, c) })
 
@@ -39,7 +45,8 @@ func SetupRouter(database *db.Database) *gin.Engine {
 
 	r.POST("/interview-db/home/admin/candidates", func(c *gin.Context) { handlers.AddCandidateToResume(database, c) })
 	r.GET("/interview-db/home/admin/candidates", func(c *gin.Context) { handlers.GetListOfAllCandidate(database, c) })
-	//r.PUT("/interview-db/home/admin/candidates/update", func(c *gin.Context) { handlers.UpdateCandidate(database, c) })
+	r.PUT("/interview-db/home/admin/candidates/update", func(c *gin.Context) { handlers.UpdateCandidate(database, c) })
+	r.POST("/interview-db/home/admin/interviewStatus", func(c *gin.Context) { handlers.AddCandidateToInteviewStatusTable(database, c) })
 	r.PUT("/interview-db/home/admin/candidates/interview_status_update", func(c *gin.Context) { handlers.UpdateCandidateAtInterviewStatus(database, c) })
 
 	r.POST("/interview-db/register", func(c *gin.Context) { handlers.SignupHandler(database, c) })
