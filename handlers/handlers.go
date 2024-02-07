@@ -395,7 +395,7 @@ func GetRejectedL2Count(db DBHandler, c *gin.Context) {
 // anushree task
 func GetListOfAllCandidatResumeShortListed(db DBHandler, c *gin.Context) {
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
-	rows, err := db.Query("SELECT r.candidate_id,r.skill_category, r.name,r.mobile, r.email_id, r.current_company,r.total_experience,r.relevent_experience,r.notice_period, r.comment, r.screening_status " +
+	rows, err := db.Query("SELECT r.date, r.candidate_id,r.skill_category, r.name,r.mobile, r.email_id, r.current_company,r.total_experience,r.relevent_experience,r.notice_period, r.comment, r.screening_status " +
 		"FROM resume r WHERE r.screening_status= 'shortlisted'")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -408,7 +408,7 @@ func GetListOfAllCandidatResumeShortListed(db DBHandler, c *gin.Context) {
 	var candidates []models.ResumeCandidate
 	for rows.Next() {
 		var candidate models.ResumeCandidate
-		if err := rows.Scan(&candidate.CandidateID, &candidate.SkillCategory, &candidate.Name, &candidate.Mobile, &candidate.EmailID, &candidate.CurrentCompany, &candidate.TotalExperience, &candidate.RelevantExperience, &candidate.NoticePeriod, &candidate.Comment, &candidate.ScreeningStatus); err != nil {
+		if err := rows.Scan(&candidate.Date, &candidate.CandidateID, &candidate.SkillCategory, &candidate.Name, &candidate.Mobile, &candidate.EmailID, &candidate.CurrentCompany, &candidate.TotalExperience, &candidate.RelevantExperience, &candidate.NoticePeriod, &candidate.Comment, &candidate.ScreeningStatus); err != nil {
 			log.Println("Error scanning row:", err)
 			continue
 		}
@@ -428,7 +428,7 @@ func GetListOfAllCandidatResumeShortListed(db DBHandler, c *gin.Context) {
 
 func GetListOfAllCandidatResumeRejected(db DBHandler, c *gin.Context) {
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
-	rows, err := db.Query("SELECT r.candidate_id,r.skill_category, r.name, r.mobile, r.email_id, r.current_company,r.total_experience,r.relevent_experience,r.notice_period, r.comment, r.screening_status " +
+	rows, err := db.Query("SELECT r.date,r.candidate_id,r.skill_category, r.name, r.mobile, r.email_id, r.current_company,r.total_experience,r.relevent_experience,r.notice_period, r.comment, r.screening_status " +
 		"FROM resume r WHERE r.screening_status= 'rejected'")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -441,7 +441,7 @@ func GetListOfAllCandidatResumeRejected(db DBHandler, c *gin.Context) {
 	var candidates []models.ResumeCandidate
 	for rows.Next() {
 		var candidate models.ResumeCandidate
-		if err := rows.Scan(&candidate.CandidateID, &candidate.SkillCategory, &candidate.Name, &candidate.Mobile, &candidate.EmailID, &candidate.CurrentCompany, &candidate.TotalExperience, &candidate.RelevantExperience, &candidate.NoticePeriod, &candidate.Comment, &candidate.ScreeningStatus); err != nil {
+		if err := rows.Scan(&candidate.Date, &candidate.CandidateID, &candidate.SkillCategory, &candidate.Name, &candidate.Mobile, &candidate.EmailID, &candidate.CurrentCompany, &candidate.TotalExperience, &candidate.RelevantExperience, &candidate.NoticePeriod, &candidate.Comment, &candidate.ScreeningStatus); err != nil {
 			log.Println("Error scanning row:", err)
 			continue
 		}
