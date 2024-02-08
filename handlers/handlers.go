@@ -22,20 +22,22 @@ type DBHandler interface {
 //kundan task
 
 func GetCandidatesWithAcceptedOffers(db DBHandler, c *gin.Context) {
+	excel, param_err := strconv.ParseBool(c.Query("excel"))
+	if param_err != nil {
+		excel = false
+	}
+
+	var candidates []models.Candidate
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
 	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
 		"FROM resume r " +
 		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id " +
 		"WHERE ist.interview_status = 'offer_rolledout_accepted'")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		log.Println("Error querying the database:", err)
-		return
-	}
+
 	defer rows.Close()
 
 	// Iterate through the result set and build a list of candidates
-	var candidates []models.Candidate
+
 	for rows.Next() {
 		var candidate models.Candidate
 		if err := rows.Scan(&candidate.CandidateID, &candidate.Name, &candidate.EmailID, &candidate.CurrentCompany, &candidate.Mobile, &candidate.InterviewStatus); err != nil {
@@ -45,14 +47,23 @@ func GetCandidatesWithAcceptedOffers(db DBHandler, c *gin.Context) {
 		candidates = append(candidates, candidate)
 	}
 
-	// Return the list of candidates with interview status =offer_rolledout_accepted
-	c.JSON(http.StatusOK, candidates)
+	if !excel {
 
-	// writing data to excel file
-	err = writeToExcel("accepted_candidates.xlsx", candidates)
-	if err != nil {
-		log.Println("Error writing data to Excel:", err)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			log.Println("Error querying the database:", err)
+			return
+		}
+		// Return the list of candidates with interview status =offer_rolledout_accepted
+		c.JSON(http.StatusOK, candidates)
+	} else {
+		// writing data to excel file
+		err := writeToExcel("accepted_candidates.xlsx", candidates)
+		if err != nil {
+			log.Println("Error writing data to Excel:", err)
+		}
 	}
+
 }
 
 func GetCandidatesWithAwaitedOffers(db DBHandler, c *gin.Context) {
