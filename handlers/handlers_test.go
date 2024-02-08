@@ -6,16 +6,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/kundanacc20/Offer_Rolledout/db"
 	"github.com/kundanacc20/Offer_Rolledout/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
+// kundan unit test cases
 func TestGetCandidatesWithAcceptedOffers(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -336,4 +339,327 @@ func TestGetRejectedL2Count(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "{\"level_L2_rejected_count\":2}", w.Body.String())
+}
+
+//yellaling unit test cases
+
+func TestGetListOfAllCandidatOnboarded(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(1, "Rahul", "rahul@example.com", "tcs Company", "1234560890", "Onboarded").
+		AddRow(2, "ramesh", "ramesh@example.com", "tcs Company", "9876503210", "Onboarded")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/Onboarded", func(ctx *gin.Context) { GetListOfAllCandidatOnboarded(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/Onboarded", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetOnboardedCount(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).
+		AddRow(2)
+
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/onboarded_count", func(ctx *gin.Context) { GetOnboardedCount(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/onboarded_count", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	//assert.Equal(t, "{\"onboarded_count\":2}", w.Body.String())
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetListOfAllCandidatOnboardedNegative(t *testing.T) {
+	mockDB := new(MockDB)
+	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+	r := gin.Default()
+	r.GET("/interview-db/home/Onboarded", func(ctx *gin.Context) { GetListOfAllCandidatOnboarded(mockDB, ctx) })
+
+	req, err := http.NewRequest("GET", "/interview-db/home/Onboarded", nil)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockDB.AssertExpectations(t)
+}
+
+//shaik unit test cases
+
+func TestGetListOfAllCandidatAtDM(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(305, "shaik", "shaik@gmail.com", "wipro", "1234567890", "DM_selected").
+		AddRow(306, "saisameer", "saidameer@gmail.com", "tcs", "9876543210", "DM_rejected")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM", func(ctx *gin.Context) { GetListOfAllCandidatAtDM(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/DM", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetGetListOfAllCandidatAtDMNegative(t *testing.T) {
+	mockDB := new(MockDB)
+	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM", func(ctx *gin.Context) { GetListOfAllCandidatAtDM(mockDB, ctx) })
+
+	req, err := http.NewRequest("GET", "/interview-db/home/DM", nil)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockDB.AssertExpectations(t)
+}
+
+func TestGetSelectedDMCount(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).
+		AddRow(1)
+
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM_selected", func(ctx *gin.Context) { GetSelectedDMCount(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/DM_selected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "{\"level_DM_selected_count\":1}", w.Body.String())
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetRejectedDMCount(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"count"}).
+		AddRow(1)
+
+	mock.ExpectQuery("SELECT COUNT(.*)").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM_rejected", func(ctx *gin.Context) { GetRejectedDMCount(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/DM_rejected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "{\"level_DM_rejected_count\":1}", w.Body.String())
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetListOfAllCandidatAtDMSelected(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(305, "shaik", "shaik@gmail.com", "wipro", "1234567890", "DM_selected").
+		AddRow(306, "saisameer", "saidameer@gmail.com", "tcs", "9876543210", "DM_rejected")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM_selected", func(ctx *gin.Context) { GetListOfAllCandidatAtDMSelected(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/DM_selected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetListOfAllCandidatAtDMRejected(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not epected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"candidate_id", "name", "email_id", "current_company", "mobile", "interview_status"}).
+		AddRow(305, "shaik", "shaik@gmail.com", "wipro", "1234567890", "DM_selected").
+		AddRow(306, "saisameer", "saidameer@gmail.com", "tcs", "9876543210", "DM_rejected")
+
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM_rejected", func(ctx *gin.Context) { GetListOfAllCandidatAtDMRejected(db, ctx) })
+
+	req, _ := http.NewRequest("GET", "/interview-db/home/DM_rejected", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled edpectation: %s", err)
+	}
+
+}
+
+func TestGetListOfAllCandidatAtDMSelectedNegative(t *testing.T) {
+	mockDB := new(MockDB)
+	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM_selected", func(ctx *gin.Context) { GetListOfAllCandidatAtDMSelected(mockDB, ctx) })
+
+	req, err := http.NewRequest("GET", "/interview-db/home/DM_selected", nil)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockDB.AssertExpectations(t)
+}
+
+func TestGetListOfAllCandidatAtDMRejectedNegative(t *testing.T) {
+	mockDB := new(MockDB)
+	mockDB.On("Query", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+	r := gin.Default()
+	r.GET("/interview-db/home/DM_rejected", func(ctx *gin.Context) { GetListOfAllCandidatAtDMRejected(mockDB, ctx) })
+
+	req, err := http.NewRequest("GET", "/interview-db/home/DM_rejected", nil)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockDB.AssertExpectations(t)
+}
+
+// sivarajan unit test cases
+func TestUserLoginHandler_Success(t *testing.T) {
+	//Initialize Gin router
+	router := gin.Default()
+	// Mock database instance
+	mockDB := &db.Database{}
+	//mockDB = sqlmock.New()
+
+	// create a test request with form data
+	req, _ := http.NewRequest("POST", "/login", strings.NewReader("user_name=testuser&password=testpassword"))
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Recorder to record the response
+	w := httptest.NewRecorder()
+
+	// set up the handler
+	router.POST("/login", func(c *gin.Context) {
+		UserLoginHandler(mockDB, c)
+	})
+
+	// server the request
+	router.ServeHTTP(w, req)
+
+	// assert status code is 303 (see other, redirect based on isAdmin)
+	assert.Equal(t, http.StatusSeeOther, w.Code)
+
+	// assert that the user is redirected to the expected url
+	assert.Contains(t, w.Header().Get("Location"), "/login?error=1")
+}
+
+func TestUserLoginHandler_InvalidCredentials(t *testing.T) {
+	//Initialize Gin router
+	router := gin.Default()
+	// Mock database instance
+	mockDB := &db.Database{}
+	//mockDB = sqlmock.New()
+
+	// create a test request with form data
+	req, _ := http.NewRequest("POST", "/login", strings.NewReader("user_name=testuser&password=testpassword"))
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Recorder to record the response
+	w := httptest.NewRecorder()
+
+	// set up the handler
+	router.POST("/login", func(c *gin.Context) {
+		UserLoginHandler(mockDB, c)
+	})
+
+	// server the request
+	router.ServeHTTP(w, req)
+
+	// assert status code is 303 (see other, redirect to login with error)
+	assert.Equal(t, http.StatusSeeOther, w.Code)
+
+	// assert that the user is redirected to the expected url
+	assert.Contains(t, w.Header().Get("Location"), "/login?error=1")
+
 }

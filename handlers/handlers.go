@@ -208,7 +208,7 @@ func GetListOfAllCandidatAtDM(db DBHandler, c *gin.Context) {
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
 	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
 		"FROM resume r " +
-		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'DM_selected' or ist.interview_status= 'DM_rejected'")
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'DM_selected' or ist.interview_status= 'DM_rejected' or ist.interview_status= 'DM_TBS' or ist.interview_status= 'DM_scheduled'")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		log.Println("Error querying the database:", err)
@@ -265,7 +265,7 @@ func GetListOfAllCandidatAtDMSelected(db DBHandler, c *gin.Context) {
 	c.JSON(http.StatusOK, candidates)
 
 	// writing data to excel file
-	err = writeToExcel("candidates_at_DM_level.xlsx", candidates)
+	err = writeToExcel("candidates_DM_level_selected.xlsx", candidates)
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
@@ -299,11 +299,59 @@ func GetListOfAllCandidatAtDMRejected(db DBHandler, c *gin.Context) {
 	c.JSON(http.StatusOK, candidates)
 
 	// writing data to excel file
-	err = writeToExcel("candidates_at_DM_level.xlsx", candidates)
+	err = writeToExcel("candidates_DM_level_rejected.xlsx", candidates)
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
 
+}
+
+func GetListOfAllCandidatAtDMPending(db DBHandler, c *gin.Context) {
+	// Query the database for candidates with interview status "offer_rolledout_accepted"
+	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
+		"FROM resume r " +
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status= 'DM_TBS' or ist.interview_status= 'DM_scheduled' ")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+	defer rows.Close()
+
+	// Iterate through the result set and build a list of candidates
+	var candidates []models.Candidate
+	for rows.Next() {
+		var candidate models.Candidate
+		if err := rows.Scan(&candidate.CandidateID, &candidate.Name, &candidate.EmailID, &candidate.CurrentCompany, &candidate.Mobile, &candidate.InterviewStatus); err != nil {
+			log.Println("Error scanning row:", err)
+			continue
+		}
+		candidates = append(candidates, candidate)
+	}
+
+	// Return the list of candidates with interview status =onboarded
+	c.JSON(http.StatusOK, candidates)
+
+	// writing data to excel file
+	err = writeToExcel("candidates_DM_level_pending.xlsx", candidates)
+	if err != nil {
+		log.Println("Error writing data to Excel:", err)
+	}
+
+}
+
+func GetPendingDMCount(db DBHandler, c *gin.Context) {
+	// Query the database for the count of candidates with interview status "offer_rolledout_accepted"
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM interview_status_table WHERE interview_status= 'DM_TBS' or interview_status= 'DM_scheduled'").Scan(&count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+
+	// Return the total count of candidates with interview status "offer_rolledout_accepted"
+	c.JSON(http.StatusOK, gin.H{"level_DM_pending_count": count})
 }
 
 func GetSelectedDMCount(db DBHandler, c *gin.Context) {
@@ -340,7 +388,7 @@ func GetListOfAllCandidatAtL1(db DBHandler, c *gin.Context) {
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
 	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
 		"FROM resume r " +
-		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'L1_selected' or ist.interview_status= 'L1_rejected'")
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'L1_selected' or ist.interview_status= 'L1_rejected' or ist.interview_status = 'L1_TBS' or ist.interview_status= 'L1_scheduled'")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		log.Println("Error querying the database:", err)
@@ -397,7 +445,7 @@ func GetListOfAllCandidatAtL1Selected(db DBHandler, c *gin.Context) {
 	c.JSON(http.StatusOK, candidates)
 
 	// writing data to excel file
-	err = writeToExcel("L1_candidates.xlsx", candidates)
+	err = writeToExcel("L1_selected_candidates.xlsx", candidates)
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
@@ -431,11 +479,58 @@ func GetListOfAllCandidatAtL1Rejected(db DBHandler, c *gin.Context) {
 	c.JSON(http.StatusOK, candidates)
 
 	// writing data to excel file
-	err = writeToExcel("L1_candidates.xlsx", candidates)
+	err = writeToExcel("L1_rejected_candidates.xlsx", candidates)
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
 
+}
+func GetListOfAllCandidatAtL1Pending(db DBHandler, c *gin.Context) {
+	// Query the database for candidates with interview status "offer_rolledout_accepted"
+	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
+		"FROM resume r " +
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'L1_TBS' or ist.interview_status= 'L1_scheduled'")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+	defer rows.Close()
+
+	// Iterate through the result set and build a list of candidates
+	var candidates []models.Candidate
+	for rows.Next() {
+		var candidate models.Candidate
+		if err := rows.Scan(&candidate.CandidateID, &candidate.Name, &candidate.EmailID, &candidate.CurrentCompany, &candidate.Mobile, &candidate.InterviewStatus); err != nil {
+			log.Println("Error scanning row:", err)
+			continue
+		}
+		candidates = append(candidates, candidate)
+	}
+
+	// Return the list of candidates with interview status =onboarded
+	c.JSON(http.StatusOK, candidates)
+
+	// writing data to excel file
+	err = writeToExcel("L1_pending_candidates.xlsx", candidates)
+	if err != nil {
+		log.Println("Error writing data to Excel:", err)
+	}
+
+}
+
+func GetPendingL1Count(db DBHandler, c *gin.Context) {
+	// Query the database for the count of candidates with interview status "offer_rolledout_accepted"
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM interview_status_table WHERE interview_status = 'L1_TBS' or interview_status= 'L1_scheduled'").Scan(&count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+
+	// Return the total count of candidates with interview status "offer_rolledout_accepted"
+	c.JSON(http.StatusOK, gin.H{"level_L1_pending_count": count})
 }
 
 func GetSelectedL1Count(db DBHandler, c *gin.Context) {
@@ -470,7 +565,7 @@ func GetListOfAllCandidatAtL2(db DBHandler, c *gin.Context) {
 	// Query the database for candidates with interview status "offer_rolledout_accepted"
 	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
 		"FROM resume r " +
-		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'L2_selected' or ist.interview_status= 'L2_rejected'")
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status = 'L2_selected' or ist.interview_status= 'L2_rejected' or ist.interview_status= 'L2_TBS' OR ist.interview_status= 'L2_scheduled'")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		log.Println("Error querying the database:", err)
@@ -527,7 +622,7 @@ func GetListOfAllCandidatAtL2Selected(db DBHandler, c *gin.Context) {
 	c.JSON(http.StatusOK, candidates)
 
 	// writing data to excel file
-	err = writeToExcel("L2_candidates.xlsx", candidates)
+	err = writeToExcel("L2_selected_candidates.xlsx", candidates)
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
@@ -561,11 +656,59 @@ func GetListOfAllCandidatAtL2Rejected(db DBHandler, c *gin.Context) {
 	c.JSON(http.StatusOK, candidates)
 
 	// writing data to excel file
-	err = writeToExcel("L2_candidates.xlsx", candidates)
+	err = writeToExcel("L2_rejected_candidates.xlsx", candidates)
 	if err != nil {
 		log.Println("Error writing data to Excel:", err)
 	}
 
+}
+
+func GetListOfAllCandidatAtL2Pending(db DBHandler, c *gin.Context) {
+	// Query the database for candidates with interview status "offer_rolledout_accepted"
+	rows, err := db.Query("SELECT r.candidate_id, r.name, r.email_id, r.current_company, r.mobile, ist.interview_status " +
+		"FROM resume r " +
+		"JOIN interview_status_table ist ON r.candidate_id = ist.candidate_id WHERE ist.interview_status= 'L2_TBS' OR ist.interview_status= 'L2_scheduled'")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+	defer rows.Close()
+
+	// Iterate through the result set and build a list of candidates
+	var candidates []models.Candidate
+	for rows.Next() {
+		var candidate models.Candidate
+		if err := rows.Scan(&candidate.CandidateID, &candidate.Name, &candidate.EmailID, &candidate.CurrentCompany, &candidate.Mobile, &candidate.InterviewStatus); err != nil {
+			log.Println("Error scanning row:", err)
+			continue
+		}
+		candidates = append(candidates, candidate)
+	}
+
+	// Return the list of candidates with interview status =onboarded
+	c.JSON(http.StatusOK, candidates)
+
+	// writing data to excel file
+	err = writeToExcel("L2_pending_candidates.xlsx", candidates)
+	if err != nil {
+		log.Println("Error writing data to Excel:", err)
+	}
+
+}
+
+func GetPendingL2Count(db DBHandler, c *gin.Context) {
+	// Query the database for the count of candidates with interview status "offer_rolledout_accepted"
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM interview_status_table WHERE interview_status= 'L2_TBS' OR interview_status= 'L2_scheduled'").Scan(&count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		log.Println("Error querying the database:", err)
+		return
+	}
+
+	// Return the total count of candidates with interview status "offer_rolledout_accepted"
+	c.JSON(http.StatusOK, gin.H{"level_L2_pending_count": count})
 }
 
 func GetSelectedL2Count(db DBHandler, c *gin.Context) {
@@ -725,6 +868,7 @@ func GetListOfAllCandidate(db DBHandler, c *gin.Context) {
 }
 
 func UpdateCandidate(db DBHandler, C *gin.Context) {
+	candidateID, err := strconv.ParseInt(C.Param("id"), 0, 32)
 	var candidate models.ResumeCandidate
 
 	// Bind JSON request body to the Candidate struct
@@ -741,32 +885,34 @@ func UpdateCandidate(db DBHandler, C *gin.Context) {
 
 	// Check if the candidate with the provided candidate_id exists
 	var existingCandidate models.ResumeCandidate
-	err := db.QueryRow("SELECT * FROM interview_dashboard1.resume WHERE candidate_id = ?", candidate.CandidateID).
+	dberr := db.QueryRow("SELECT * FROM interview_dashboard1.resume WHERE candidate_id = ?", candidateID).
 		Scan(&existingCandidate.Date, &existingCandidate.SkillCategory, &existingCandidate.CandidateID, &existingCandidate.Name, &existingCandidate.Mobile, &existingCandidate.EmailID, &existingCandidate.TotalExperience, &existingCandidate.RelevantExperience, &existingCandidate.CurrentCompany, &existingCandidate.NoticePeriod, &existingCandidate.Comment, &existingCandidate.ScreeningStatus)
 
-	if err == sql.ErrNoRows {
+	if dberr == sql.ErrNoRows {
 		C.JSON(http.StatusNotFound, gin.H{"error": "Candidate not found"})
 		return
-	} else if err != nil {
+	} else if dberr != nil {
 		C.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		log.Println("Error querying candidate from the database:", err)
 		return
 	}
 
 	// Update the candidate in the database
-	_, err = db.Exec("UPDATE interview_dashboard1.resume SET date=?, skill_category=?, name=?, mobile=?, email_id=?, total_experience=?, relevent_experience=?, current_company=?, notice_period=?, comment=?, screening_status=? WHERE candidate_id=?",
-		candidate.Date, candidate.SkillCategory, candidate.Name, candidate.Mobile, candidate.EmailID, candidate.TotalExperience, candidate.RelevantExperience, candidate.CurrentCompany, candidate.NoticePeriod, candidate.Comment, candidate.ScreeningStatus, candidate.CandidateID)
-	if err != nil {
+	_, err_exc := db.Exec("UPDATE interview_dashboard1.resume SET date=?, skill_category=?, name=?, mobile=?, email_id=?, total_experience=?, relevent_experience=?, current_company=?, notice_period=?, comment=?, screening_status=? WHERE candidate_id=?",
+		candidate.Date, candidate.SkillCategory, candidate.Name, candidate.Mobile, candidate.EmailID, candidate.TotalExperience, candidate.RelevantExperience, candidate.CurrentCompany, candidate.NoticePeriod, candidate.Comment, candidate.ScreeningStatus, candidateID)
+	if err_exc != nil {
 		C.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		log.Println("Error updating candidate in the database:", err)
+		log.Println("Error updating candidate in the database:", err_exc)
 		return
 	}
-
+	var updated_candidate models.ResumeCandidate
+	_ = db.QueryRow("SELECT candidate_id,date,skill_category,name,mobile,email_id,total_experience,relevent_experience,current_company,notice_period,comment,screening_status FROM interview_dashboard1.resume WHERE candidate_id =?", candidateID).Scan(&updated_candidate.CandidateID, &updated_candidate.Date, &updated_candidate.SkillCategory, &updated_candidate.Name, &updated_candidate.Mobile, &updated_candidate.EmailID, &updated_candidate.TotalExperience, &updated_candidate.RelevantExperience, &updated_candidate.CurrentCompany, &updated_candidate.NoticePeriod, &updated_candidate.Comment, &updated_candidate.ScreeningStatus)
 	// Return the updated candidate
-	C.JSON(http.StatusOK, candidate)
+	C.JSON(http.StatusOK, updated_candidate)
 }
 
 func UpdateCandidateAtInterviewStatus(db DBHandler, C *gin.Context) {
+	candidateID, err := strconv.ParseInt(C.Param("id"), 0, 32)
 	var candidate models.InterviewAtStatus
 
 	// Bind JSON request body to the Candidate struct
@@ -775,37 +921,32 @@ func UpdateCandidateAtInterviewStatus(db DBHandler, C *gin.Context) {
 		return
 	}
 
-	// Check if candidate_id is provided in the request
-	if candidate.CandidateID == 0 {
-		C.JSON(http.StatusBadRequest, gin.H{"error": "Candidate ID is required for update"})
-		return
-	}
-
 	// Check if the candidate with the provided candidate_id exists
 	var existingCandidate models.InterviewAtStatus
-	err := db.QueryRow("SELECT * FROM interview_dashboard1.interview_status_table WHERE candidate_id = ?", candidate.CandidateID).
+	dberr := db.QueryRow("SELECT * FROM interview_dashboard1.interview_status_table WHERE candidate_id = ?", candidateID).
 		Scan(&existingCandidate.CandidateID, &existingCandidate.InterviewStatus, &existingCandidate.L1ScheduledDate, &existingCandidate.L1Panel, &existingCandidate.L2ScheduledDate, &existingCandidate.L2Panel, &existingCandidate.DMScheduledDate, &existingCandidate.DMPanel, &existingCandidate.OnboardingDate, &existingCandidate.Comment)
 
-	if err == sql.ErrNoRows {
+	if dberr == sql.ErrNoRows {
 		C.JSON(http.StatusNotFound, gin.H{"error": "Candidate not found"})
 		return
-	} else if err != nil {
+	} else if dberr != nil {
 		C.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		log.Println("Error querying candidate from the database:", err)
 		return
 	}
 
 	// Update the candidate in the database
-	_, err = db.Exec("UPDATE interview_dashboard1.interview_status_table SET interview_status=?, L1_scheduled_date=?, L1_panel=?, L2_scheduled_date=?, L2_panel=?, DM_scheduled_date=?, DM_panel=?, onboarding_date=?, comment=? WHERE candidate_id=?",
-		candidate.InterviewStatus, candidate.L1ScheduledDate, candidate.L1Panel, candidate.L2ScheduledDate, candidate.L2Panel, candidate.DMScheduledDate, candidate.DMPanel, candidate.OnboardingDate, candidate.Comment, candidate.CandidateID)
-	if err != nil {
+	_, err_exc := db.Exec("UPDATE interview_dashboard1.interview_status_table SET interview_status=?, L1_scheduled_date=?, L1_panel=?, L2_scheduled_date=?, L2_panel=?, DM_scheduled_date=?, DM_panel=?, onboarding_date=?, comment=? WHERE candidate_id=?",
+		candidate.InterviewStatus, candidate.L1ScheduledDate, candidate.L1Panel, candidate.L2ScheduledDate, candidate.L2Panel, candidate.DMScheduledDate, candidate.DMPanel, candidate.OnboardingDate, candidate.Comment, candidateID)
+	if err_exc != nil {
 		C.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		log.Println("Error updating candidate in the database:", err)
+		log.Println("Error updating candidate in the database:", err_exc)
 		return
 	}
-
+	var updated_candidate models.InterviewAtStatus
+	_ = db.QueryRow("SELECT candidate_id,interview_status,L1_scheduled_date,L1_panel,L2_scheduled_date,L2_panel,DM_scheduled_date,DM_panel,onboarding_date,comment FROM interview_dashboard1.interview_status_table WHERE candidate_id =?", candidateID).Scan(&updated_candidate.CandidateID, &updated_candidate.InterviewStatus, &updated_candidate.L1ScheduledDate, &updated_candidate.L1Panel, &updated_candidate.L1ScheduledDate, &updated_candidate.L2Panel, &updated_candidate.DMScheduledDate, &updated_candidate.DMPanel, &updated_candidate.OnboardingDate, &updated_candidate.Comment)
 	// Return the updated candidate
-	C.JSON(http.StatusOK, candidate)
+	C.JSON(http.StatusOK, updated_candidate)
 }
 
 func AddCandidateToInteviewStatusTable(db DBHandler, C *gin.Context) {
